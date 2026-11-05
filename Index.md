@@ -1,1 +1,234 @@
-# guchinsergej33-sys.github.io
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Квест для тебя ❤️</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #ff9a9e, #fad0c4, #fbc2eb);
+    background-size: 400% 400%;
+    animation: bg 15s ease infinite;
+    padding: 20px;
+    text-align: center;
+    overflow: hidden; /* Важно: скрываем сердечки, вылетающие за пределы экрана */
+    position: relative;
+  }
+  @keyframes bg {
+    0%,100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  .card {
+    background: rgba(255,255,255,0.92);
+    border-radius: 24px;
+    padding: 40px 30px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.15);
+    animation: pop 0.6s ease;
+    position: relative;
+    z-index: 10; /* Карточка поверх сердечек */
+  }
+  @keyframes pop {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+  h1 { color: #e91e63; margin-bottom: 20px; font-size: 1.6em; }
+  .question { font-size: 1.3em; color: #333; margin-bottom: 25px; }
+  .options { display: flex; flex-direction: column; gap: 12px; }
+  button {
+    padding: 15px;
+    border: 2px solid #e91e63;
+    border-radius: 12px;
+    background: #fff;
+    color: #e91e63;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  button:hover:not(:disabled) { background: #fce4ec; transform: translateY(-2px); }
+  button:disabled { cursor: default; }
+  button.correct { background: #4caf50; border-color: #4caf50; color: #fff; }
+  button.wrong { background: #f44336; border-color: #f44336; color: #fff; }
+  .progress { margin-bottom: 20px; color: #888; font-size: 0.9em; }
+  
+  /* Финальный экран */
+  .final { font-size: 1.1em; line-height: 1.6; color: #333; animation: fadeIn 1s ease; }
+  .final h2 { color: #e91e63; margin-bottom: 15px; font-size: 1.5em; }
+  .final-img {
+    width: 100%;
+    max-width: 350px;
+    border-radius: 16px;
+    margin: 20px 0;
+    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+    object-fit: cover;
+  }
+  .hearts-text { font-size: 2em; margin-top: 15px; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* === СТИЛИ ДЛЯ ЛЕТАЮЩИХ СЕРДЕЧЕК === */
+  .floating-heart {
+    position: fixed;
+    top: -10vh; /* Начинают падать чуть выше экрана */
+    color: #e91e63;
+    font-size: 24px;
+    pointer-events: none; /* Чтобы они не мешали нажимать на кнопки */
+    z-index: 1;
+    animation-name: floatDown;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    text-shadow: 0 0 10px rgba(233, 30, 99, 0.3);
+  }
+  @keyframes floatDown {
+    0% { transform: translateY(-10vh) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="card" id="card">
+    <div id="content"></div>
+  </div>
+
+<script>
+// ==== НАСТРОЙКА: меняй под себя ====
+const questions = [
+  {
+    q: "Где мы начали встречаться?",
+    options: ["В школе", "На лавочке", "В интернете", "Не начинали :)"],
+    correct: 1
+  },
+  {
+    q: "Сколько мы уже вместе?(в годах)",
+    options: ["1", "3", "7", "5"],
+    correct: 3
+  },
+  {
+    q: "Где мы впервые поцеловались?",
+    options: ["Дома", "В школе", "Около школы", "У бабукши"],
+    correct: 2
+  },
+  {
+    q: "А если в засос?",
+    options: ["Дома", "В школе", "Около школы", "У бабукши"],
+    correct: 0
+  },
+  {
+    q: "Самое неудачное время года для наших отношений?",
+    options: ["Зима", "Весна", "Лето", "Осень"],
+    correct: 0
+  },
+  {
+    q: "Наш любимый вид спорта?",
+    options: ["Настольный теннис", "Баскетбол", "Волейбол", "Футбол"],
+    correct: 2
+  },
+  {
+    q: "Что мы очень любим кушать?",
+    options: ["Траву", "Детей(черных)", "Полезную пищу", "Бургеры и роллы"],
+    correct: 3
+  },
+  {
+    q: "Кто из нас больше любит?",
+    options: ["Я", "Ты", "Никто", "Конечно же мы любим одинаково <3"],
+    correct: 3
+  },
+];
+
+const finalMessage = {
+  title: "Ты справилась! ❤️",
+  text: "Спасибо, что ты есть. Каждый день с тобой — как этот квест: волнующий, тёплый и всегда с хорошим концом. Я люблю тебя!",
+  imageSrc: "photo.jpg" // Убедись, что фото лежит в той же папке
+};
+// ====================================
+
+let current = 0;
+const content = document.getElementById('content');
+
+// Функция для запуска сердечек
+function startHeartsAnimation() {
+  const heartSymbols = ['❤️', '💖', '💕', '💗', '💓'];
+  
+  // Создаем 30 сердечек
+  for (let i = 0; i < 30; i++) {
+    const heart = document.createElement('div');
+    heart.classList.add('floating-heart');
+    
+    // Случайный символ
+    heart.innerText = heartSymbols[Math.floor(Math.random() * heartSymbols.length)];
+    
+    // Случайная позиция по горизонтали (от 0 до 100% ширины экрана)
+    heart.style.left = Math.random() * 100 + 'vw';
+    
+    // Случайный размер (от 15px до 40px)
+    heart.style.fontSize = (Math.random() * 25 + 15) + 'px';
+    
+    // Случайная скорость падения (от 4 до 10 секунд)
+    heart.style.animationDuration = (Math.random() * 6 + 4) + 's';
+    
+    // Случайная задержка старта (от 0 до 5 секунд), чтобы они падали не все сразу
+    heart.style.animationDelay = (Math.random() * 5) + 's';
+    
+    document.body.appendChild(heart);
+  }
+}
+
+function render() {
+  if (current >= questions.length) {
+    // Финальный экран
+    content.innerHTML = `
+      <div class="final">
+        <h2>${finalMessage.title}</h2>
+        <p>${finalMessage.text}</p>
+        <img src="${finalMessage.imageSrc}" alt="Наше фото" class="final-img" onerror="this.style.display='none'">
+        <div class="hearts-text">💕💖💕</div>
+      </div>`;
+    
+    // ЗАПУСКАЕМ СЕРДЕЧКИ!
+    startHeartsAnimation();
+    return;
+  }
+
+  const q = questions[current];
+  content.innerHTML = `
+    <div class="progress">Вопрос ${current + 1} из ${questions.length}</div>
+    <div class="question">${q.q}</div>
+    <div class="options" id="opts"></div>
+  `;
+
+  const opts = document.getElementById('opts');
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.textContent = opt;
+    btn.onclick = () => answer(i, btn);
+    opts.appendChild(btn);
+  });
+}
+
+function answer(i, btn) {
+  const q = questions[current];
+  const allBtns = document.querySelectorAll('#opts button');
+  
+  if (i === q.correct) {
+    allBtns.forEach(b => b.disabled = true);
+    btn.classList.add('correct');
+    setTimeout(() => { current++; render(); }, 600);
+  } else {
+    btn.classList.add('wrong');
+    btn.disabled = true;
+  }
+}
+
+render();
+</script>
+</body>
+</html>
